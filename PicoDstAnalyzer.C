@@ -78,11 +78,15 @@ const Double_t alpha_LamBar = -0.642;
 
 //Func
 double GetPsi(int iOrd, double Qx, double Qy);
-int CentralityBin(int Multiplicity);
-float GetBBCTilePhi(const Int_t e_w, const Int_t iTile);
-TVector3 GetRandomPointOnTile(int position, int tile, int row, int ew);
 bool ScipZeroWeight(double arr[], int size);
+Float_t ZDCSMD( StPicoEvent *pEv, int eastwest, int verthori, int strip );
+Float_t ZDCSMD_GetPosition( int eastwest, int verthori, int strip );
 const int nSub = 3;
+
+double const mZDCSMDCenterex = 0;
+double const mZDCSMDCenterey = 0;
+double const mZDCSMDCenterwx = 0;
+double const mZDCSMDCenterwy = 0;
 
 
 // inFile - is a name of name.FemtoDst.root file or a name
@@ -107,7 +111,6 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
     */
 
     //Histograms with corrections
-    TProfile *v1_average[9][2];
     TH1F *Coef_A_n_TH_Psi1[10][nSub];
     TH1F *Coef_B_n_TH_Psi1[10][nSub];
     TH1F *Coef_A_n_TH_Psi2[10][nSub];
@@ -144,15 +147,6 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
                 }
             }      
         }
-    }
-
-    TFile *inputV1 = new TFile("/star/u/mmorozov/14p5MakeCorrections/correctionsEP_output/outputV1.root", "read");
-    
-    for(int iCent=0; iCent!=9; iCent++){
-        for(int iSub=0; iSub!=2; iSub++){
-            v1_average[iCent][iSub] = (TProfile*)inputV1->Get(Form("v1_average_%i_%i", iCent, iSub));
-        }
-        
     }
     
     TFile *output = new TFile(outputFile, "RECREATE");
@@ -224,49 +218,13 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
     //Variables
     //Reaction Plane
-    double QWeight_1[nSub] = {}, QWeight_2[nSub] = {};
+    double QWeight_1[2*nSub] = {}, QWeight_2[nSub] = {};
     double Qvec_1[2*nSub] = {}, Qvec_2[2*nSub] = {}, Qvec_3[2*nSub] = {};
     double Psi1[nSub] = {}, Psi2[nSub] = {}, Psi3[nSub] = {};
     double deltaPsi1[nSub] = {}, deltaPsi2[nSub] = {}, deltaPsi3[nSub] = {};
     double phi, w;
     int PP, TT, EW, iSide = 0, row;
 
-
-    //corners EPD
-    double phiCenter[12][31][2];
-    double deltaPhi = (30.0/180.0)*TMath::Pi(); 
-    int ew = 0;//east
-
-    for(int pp=1; pp<13; pp++){
-        double phiPpCenter = TMath::Pi()/2.0 - (pp-0.5)*deltaPhi;
-    	if(phiPpCenter<0.0) phiPpCenter += 2.0*TMath::Pi();
-    	phiCenter[pp-1][0][ew] = phiPpCenter;
-
-    	for(int tt=2; tt<32; tt+=2){
-      	    phiCenter[pp-1][tt-1][ew] = phiPpCenter - deltaPhi/4.0;
-    	}
-
-    	for(int tt=3; tt<32; tt+=2){
-      	    phiCenter[pp-1][tt-1][ew] = phiPpCenter + deltaPhi/4.0;
-    	}
-    }
-  
-    ew = 1;//west 5.89049
-	
-
-    for(int pp=1; pp<13; pp++){
-    	double phiPpCenter = TMath::Pi()/2.0 + (pp-0.5)*deltaPhi;
-    	if(phiPpCenter>2.0*TMath::Pi()) phiPpCenter -= 2.0*TMath::Pi();
-    	phiCenter[pp-1][0][ew] = phiPpCenter;
-
-    	for(int tt=2; tt<32; tt+=2){
-     	    phiCenter[pp-1][tt-1][ew] = phiPpCenter + deltaPhi/4.0;
-    	}
-    	for(int tt=3; tt<32; tt+=2){
-      	    phiCenter[pp-1][tt-1][ew] = phiPpCenter - deltaPhi/4.0;
-    	}
-
-    }
    
 
     
@@ -292,7 +250,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
     femtoReader->SetStatus("Event",1);
     femtoReader->SetStatus("Track",1);
     //femtoReader->SetStatus("KFP", 1);
-    femtoReader->SetStatus("EpdHit", 1);
+    //femtoReader->SetStatus("EpdHit", 1);
     std::cout << "Status has been set" << std::endl;
 
     std::cout << "Now I know what to read, Master!" << std::endl;
@@ -336,22 +294,20 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 	
         
         //Centrality
-        //TODO: Заменить поиск центральности и плохих событий на поиск по StRefMultCorr (см. /star/u/alpatov/EPCOnstructor/PicoFourteenAnalyzer.C)
-        StRefMultCorr* refmultCorrUtil = CentralityMaker::instance()->getRefMultCorr() ;
+        StRefMultCorr* refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run16_AuAu200_VpdMB5_P16ij() ;
         refmultCorrUtil -> init(event->runId());
-        refmultCorrUtil -> initEvent(event->refMult(), event->primaryVertex().z(), event->ZDCx());
+        refmultCorrUtil -> initEvent(event->grefMult(), event->primaryVertex().z(), event->ZDCx());
         Bool_t isBadRun = refmultCorrUtil-> isBadRun(event->runId()); //reject bad runs
-        Bool_t isPileUpEvt = !refmultCorrUtil->passnTofMatchRefmultCut(1.*event->refMult(), 1.*event->nBTOFMatch()); //reject pileup events
+        //Bool_t isPileUpEvt = !refmultCorrUtil->passnTofMatchRefmultCut(1.*event->grefMult(), 1.*event->nBTOFMatch()); //reject pileup events
 
         int cent = refmultCorrUtil->getCentralityBin9() ;
-        if (cent < 0 || isBadRun || isPileUpEvt) continue; 
+        if (cent < 0 || isBadRun ) continue; 
 
-        if(cent < 0) continue;
 
         for(int iSub=0; iSub!=nSub; iSub++){
             Qvec_1[2*iSub] = 0.;
             Qvec_1[2*iSub+1] = 0.;
-            QWeight_1[iSub] = 0.;
+            QWeight_1[2*iSub] = 0.;
             Psi1[iSub] = 0.;
             Qvec_2[2*iSub] = 0.;
             Qvec_2[2*iSub+1] = 0.;
@@ -378,11 +334,12 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
             if (!femtoTrack) continue;
             //std::cout << "Track #[" << (iTrk+1) << "/" << nTracks << "]"  << std::endl;
 	        double eta = femtoTrack->pMom().Eta();
+            double wEff = femtoTrack->pPt();
 
-	        if (femtoTrack->nHits() < 15 || femtoTrack->pPt() < 0.1 || femtoTrack->pPt() > 2. || fabs(femtoTrack->pMom().Eta()) > 1.5 || fabs(eta)<0.1) continue;
+	        if (femtoTrack->nHits() < 15 || wEff < 0.15 || wEff > 2. || fabs(eta) > 1.5 || fabs(eta)<0.1) continue;
             if ((Float_t)femtoTrack->nHits()/femtoTrack->nHitsPoss() < 0.52 ) continue;
 
-            double wEff = femtoTrack->pPt();
+            
             double phi = femtoTrack->pMom().Phi(); //femtoTrack->isPrimary() ? femtoTrack->pMom().Phi() : 0.;
             if(eta>0) iSide = 0;//West
             else if(eta<0) iSide = 1;//East
@@ -396,51 +353,36 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
             
         }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
 
-		//.........................................................EpdHit analysis..................................................................
-        int nEpdHits = dst->numberOfEpdHits();
+		//.........................................................Qvec by ZDC calc..............................................................
+        for( int iep=0; iep<2; iep++ ){ // east-west
 
-        //EpdHit Loop
-        for(int iEpd=0; iEpd<nEpdHits; iEpd++){
-            //Retrieve i-th EpdHit
-            StPicoEpdHit *femtoEpdHit = dst->epdHit(iEpd);
+                int nstrip;
+                for( int ixy=0; ixy<2; ixy++ ){
+                        if( ixy==0 ) nstrip = 8; // vertical strips (7 in x-direction)
+                        else         nstrip = 9; // horizontal strips (8 in y-direction)
+                        for( int is=1; is<nstrip; is++ ){
+                            Float_t zdc_adc = ZDCSMD( event, iep, ixy, is );
 
-            if(!femtoEpdHit->isGood()) continue;
-    
-            PP = femtoEpdHit->position();
-            TT = femtoEpdHit->tile();
-            EW = femtoEpdHit->side();
-            w = femtoEpdHit->nMIP();
-            row = femtoEpdHit->row();
+                            if( zdc_adc<0 ) zdc_adc = 0;
 
-            double wEff_EPD = w;
-            if(wEff_EPD<0.3) continue;
-            if(wEff_EPD>3) wEff_EPD = 3;
+                            Qvec_1[2*iep + ixy]   += ZDCSMD_GetPosition( iep, ixy, is ) * zdc_adc;
+                            QWeight_1[2*iep + ixy] += zdc_adc;
+                        }
 
-            if(EW == 1){
-                wEff_EPD *= fabs(v1_average[cent][0]->GetBinContent(row));
-                Qvec_1[0] += wEff_EPD*TMath::Cos(phiCenter[PP-1][TT-1][EW]);
-                Qvec_1[1] += wEff_EPD*TMath::Sin(phiCenter[PP-1][TT-1][EW]);
-                QWeight_1[0] += wEff_EPD;
-            }
-
-            if(EW==-1){
-                wEff_EPD *= fabs(v1_average[cent][1]->GetBinContent(row));
-                Qvec_1[2] += wEff_EPD*TMath::Cos(phiCenter[PP-1][TT-1][0]);
-                Qvec_1[3] += wEff_EPD*TMath::Sin(phiCenter[PP-1][TT-1][0]);
-                QWeight_1[1] += wEff_EPD;
-            }
+                }
         }
+
 
             
         //-------------------------------reaction plane--------------------------------------------------
-        if(!ScipZeroWeight(QWeight_1, nSub-1)) continue;
+        if(!ScipZeroWeight(QWeight_1, 2*nSub)) continue;
         if(!ScipZeroWeight(QWeight_2, nSub-1)) continue;
             
         //Get Q vectors
         bool check = true;            
         for(int iSub=0; iSub!=nSub-1; iSub++){
-            Qvec_1[2*iSub] = Qvec_1[2*iSub]/QWeight_1[iSub];
-            Qvec_1[2*iSub+1] = Qvec_1[2*iSub+1]/QWeight_1[iSub];
+            Qvec_1[2*iSub] = Qvec_1[2*iSub]/QWeight_1[2*iSub];
+            Qvec_1[2*iSub+1] = Qvec_1[2*iSub+1]/QWeight_1[2*iSub+1];
             if(fabs(Qvec_1[2*iSub])>999 || fabs(Qvec_1[2*iSub+1])>999) check = false;
 
             Qvec_2[2*iSub] = Qvec_2[2*iSub]/QWeight_2[iSub];
@@ -456,8 +398,8 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
         Qvec_1[5] = Qvec_1[1] - Qvec_1[3];
         Qvec_2[4] = Qvec_2[0] + Qvec_2[2];
         Qvec_2[5] = Qvec_2[1] + Qvec_2[3];
-        Qvec_3[4] = Qvec_3[0] - Qvec_3[2];
-        Qvec_3[5] = Qvec_3[1] - Qvec_3[3];
+        Qvec_3[4] = Qvec_3[0] + Qvec_3[2];
+        Qvec_3[5] = Qvec_3[1] + Qvec_3[3];
 
         
         //Centring collibration
@@ -571,10 +513,10 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
     //EP Distributions
     for(int iCent=0; iCent!=9; iCent++){
-	    Qvec1Hist[iCent][0]->SetTitle(Form("Qx West EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][1]->SetTitle(Form("Qy West EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][2]->SetTitle(Form("Qx East EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][3]->SetTitle(Form("Qy East EPD first harm (%i)", iCent));
+	    Qvec1Hist[iCent][0]->SetTitle(Form("Qx East EPD first harm (%i)", iCent));
+        Qvec1Hist[iCent][1]->SetTitle(Form("Qy East EPD first harm (%i)", iCent));
+        Qvec1Hist[iCent][2]->SetTitle(Form("Qx West EPD first harm (%i)", iCent));
+        Qvec1Hist[iCent][3]->SetTitle(Form("Qy West EPD first harm (%i)", iCent));
         Qvec1Hist[iCent][4]->SetTitle(Form("Qx Comb EPD first harm (%i)", iCent));
         Qvec1Hist[iCent][5]->SetTitle(Form("Qy Comb EPD first harm (%i)", iCent));
 
@@ -662,10 +604,24 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 bool EventCut(StPicoEvent *event)
 {
   bool cut = true;
-  if (!event->isTrigger(650000) && !event->isTrigger(650001) && !event->isTrigger(650002) && !event->isTrigger(650003) &&
-      !event->isTrigger(650007) && !event->isTrigger(650004) && !event->isTrigger(650005) && !event->isTrigger(650006) &&
-      !event->isTrigger(650009) ) cut = false;
-  if (event->primaryVertex().Z() < -145. || event->primaryVertex().Z() > 145. || ( pow(event->primaryVertex().X(),2) + pow(event->primaryVertex().Y(),2) > 4)) cut = false;
+  double vz = event->primaryVertex().Z(), vx = event->primaryVertex().X(), vy = event->primaryVertex().Y();
+  double grefMult = event->grefMult(), tofMult = event->btofTrayMultiplicity();
+  double vx_ave, vy_ave;
+
+  if (fabs(vz) > 6. || fabs(vz-event->vzVpd()) > 3.) cut = false;
+  if(fabs(vx)<1.e-5 && fabs(vy)<1.e-5 && fabs(vz)<1.e-5) cut = false;
+
+  vx_ave = -0.205;
+  vy_ave = -0.177;
+  if (!event->isTrigger(520001) && !event->isTrigger(520011) && !event->isTrigger(520021) && !event->isTrigger(520031) &&
+      !event->isTrigger(520041) && !event->isTrigger(520051)) cut = false;   
+  if( tofMult<(-200+3.5*grefMult) ) cut = false;
+  if( tofMult>( 180+5.8*grefMult) ) cut = false;
+
+  double vxc = vx - vx_ave;
+  double vyc = vy - vy_ave;
+
+  if(( vxc*vxc + vyc*vyc) > 4) cut = false;
 //  if (!GoodRun(event))  cut = false;
   return cut;
 
@@ -690,139 +646,6 @@ double GetPsi(int iOrd, double Qx, double Qy){
 
 }
 
-/*double GetPsiWest(double Qx, double Qy){
-  double PsiWest;
-  if(Qx>0){
-    PsiWest = TMath::ATan(Qy/Qx);
-    if(PsiWest<0.0) PsiWest += 2.0*TMath::Pi();
-  }else{
-    PsiWest = TMath::Pi() + TMath::ATan(Qy/Qx);
-  }
-  return PsiWest;    
-}*/
-
-//Centrality
-int CentralityBin(int Multiplicity) {
-    int CentId;
-    if (Multiplicity >= 290) CentId = 8; //0-5%
-    else if (Multiplicity >= 233) CentId = 7; //5-10%
-    else if (Multiplicity >= 150) CentId = 6; //10-20%
-    else if (Multiplicity >= 94) CentId = 5; //20-30%
-    else if (Multiplicity >= 57) CentId = 4; //30-40%
-    else if (Multiplicity >= 32) CentId = 3; //40-50%
-    else if (Multiplicity >= 17) CentId = 2; //50-60%
-    else if (Multiplicity >= 9) CentId = 1; //60-70%
-    else if (Multiplicity >= 4) CentId = 0; //70-80%
-    else CentId = -1;
-    return CentId;
-}
-
-float GetBBCTilePhi(const Int_t e_w, const Int_t iTile){
-    Double_t pi = TMath::Pi();
-    Double_t phi_div  = pi/6.0;
-    float bbc_phi = phi_div;
-    switch(iTile) {
-    case 0: bbc_phi=3*phi_div;
-    break;
-    case 1: bbc_phi=phi_div;
-    break;
-    case 2: bbc_phi=-1*phi_div;
-    break;
-    case 3: bbc_phi=-3*phi_div;
-    break;
-    case 4: bbc_phi=-5*phi_div;
-    break;
-    case 5: bbc_phi=5*phi_div;
-    break;
-    case 6: bbc_phi= 3*phi_div;
-    break;
-    case 7: bbc_phi=2*phi_div;
-    break;
-    case 8: bbc_phi=phi_div;
-    break;
-    case 9: bbc_phi=0.;
-    break;
-    case 10: bbc_phi=-phi_div;
-    break;
-    case 11: bbc_phi=-2*phi_div;
-    break;
-    case 12: bbc_phi=-3*phi_div;
-    break;
-    case 13: bbc_phi=-4*phi_div;
-    break;
-    case 14: bbc_phi=-5*phi_div;
-    break;
-    case 15: bbc_phi=pi;
-    break;
-    case 16: bbc_phi=5*phi_div;
-    break;
-    case 17: bbc_phi=4*phi_div;
-    break;
-    }
-    if(e_w==0){if (bbc_phi > -0.001){ bbc_phi = pi-bbc_phi;}
-                    else {bbc_phi= -pi-bbc_phi;}
-                }
-    if(bbc_phi<0.0) bbc_phi +=2*pi;
-    if(bbc_phi>2*pi) bbc_phi -=2*pi;
-    return bbc_phi;
-}
-
-//Get random point on a tile
-TVector3 GetRandomPointOnTile(int position, int tile, int row, int ew){
-    double phiCenter[12][31][2];
-    double deltaPhi = (30.0/180.0)*TMath::Pi(); 
-    int EW = 0;//east
-
-    for(int pp=1; pp<13; pp++){
-        double phiPpCenter = TMath::Pi()/2.0 - (pp-0.5)*deltaPhi;
-        if(phiPpCenter<0.0) phiPpCenter += 2.0*TMath::Pi();
-        phiCenter[pp-1][0][EW] = phiPpCenter;
-
-        for(int tt=2; tt<32; tt+=2){
-        phiCenter[pp-1][tt-1][EW] = phiPpCenter - deltaPhi/4.0;      
-        }
-
-        for(int tt=3; tt<32; tt+=2){
-        phiCenter[pp-1][tt-1][EW] = phiPpCenter + deltaPhi/4.0;
-        }
-        
-    }
-    EW = 1;//west 5.89049
-
-    for(int pp=1; pp<13; pp++){
-        double phiPpCenter = TMath::Pi()/2.0 + (pp-0.5)*deltaPhi;
-        if(phiPpCenter>2.0*TMath::Pi()) phiPpCenter -= 2.0*TMath::Pi();
-        phiCenter[pp-1][0][EW] = phiPpCenter;
-
-        for(int tt=2; tt<32; tt+=2){
-        phiCenter[pp-1][tt-1][EW] = phiPpCenter + deltaPhi/4.0;
-        }
-        for(int tt=3; tt<32; tt+=2){
-        phiCenter[pp-1][tt-1][EW] = phiPpCenter - deltaPhi/4.0;
-        }
-
-    }
-
-    double Row[17] = {4.6, 9.0, 13.4, 17.8, 23.33, 28.86, 34.39, 39.92, 45.45, 50.98, 56.51, 62.05, 67.58, 73.11, 78.64, 84.17, 89.70};
-    TRandom *rand = new TRandom();
-    //Random value (0,1)
-    double randValue = rand->Rndm();
-
-    double randRow = (Row[row] - Row[row-1])*randValue + Row[row-1];
-    if(ew == -1) ew = 0;
-    double randDeltaPhi = (deltaPhi/2.0)*randValue;
-    if(randDeltaPhi > deltaPhi/4.0) randDeltaPhi = -randDeltaPhi + deltaPhi/4.0;
-    double randPhi = phiCenter[position - 1][tile - 1][ew] + randDeltaPhi;
-
-    double x = randRow*TMath::Cos(randPhi);
-    double y = randRow*TMath::Sin(randPhi);
-    double z = 375;
-    if(ew == 0) z = -375;
-    TVector3 RandPoint(x,y,z);
-
-    return RandPoint;
-}
-
 
 bool ScipZeroWeight(double arr[], int size) {
     for (size_t i = 0; i < size; ++i) {
@@ -832,3 +655,35 @@ bool ScipZeroWeight(double arr[], int size) {
     }
     return true;
 }
+
+
+Float_t ZDCSMD( StPicoEvent *pEv, int eastwest, int verthori, int strip ) {
+
+        float val = 0;
+        if( fIsPicoAnalysis ){
+                if     ( eastwest==0 && verthori==0 ) val = pEv->ZdcSmdEastVertical  (strip-1);
+                else if( eastwest==0 && verthori==1 ) val = pEv->ZdcSmdEastHorizontal(strip-1);
+                else if( eastwest==1 && verthori==0 ) val = pEv->ZdcSmdWestVertical  (strip-1);
+                else if( eastwest==1 && verthori==1 ) val = pEv->ZdcSmdWestHorizontal(strip-1);
+
+        }else{
+                val = fMuDst->event()->zdcTriggerDetector().zdcSmd( (StBeamDirection)eastwest, verthori, strip );
+        }
+        return val;
+}
+
+
+Float_t ZDCSMD_GetPosition( int eastwest, int verthori, int strip ) {
+// Get position of each slat;strip starts from 1
+
+        Float_t zdcsmd_x[7] = {0.5,2,3.5,5,6.5,8,9.5};
+        Float_t zdcsmd_y[8] = {1.25,3.25,5.25,7.25,9.25,11.25,13.25,15.25};
+
+        if(eastwest==0 && verthori==0) return zdcsmd_x[strip-1]-mZDCSMDCenterex;
+        if(eastwest==1 && verthori==0) return mZDCSMDCenterwx-zdcsmd_x[strip-1];
+        if(eastwest==0 && verthori==1) return zdcsmd_y[strip-1]/sqrt(2.)-mZDCSMDCenterey;
+        if(eastwest==1 && verthori==1) return zdcsmd_y[strip-1]/sqrt(2.)-mZDCSMDCenterwy;
+
+  return 0;
+}
+
