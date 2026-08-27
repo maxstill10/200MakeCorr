@@ -15,7 +15,7 @@
     </command>
 
 <!-- Get input files from get_file_lis.pl -->
-<input URL="catalog:star.bnl.gov?filetype=daq_reco_picoDst,trgsetupname=AuAu_200_production_2016,production=P16ij,runnumber=17039044,filename~st_physics,storage!=hpss" preferStorage="local" singleCopy="true" nFiles="all" /> <!-- nFiles="all"  -->
+<input URL="catalog:star.bnl.gov?filetype=daq_reco_picoDst,trgsetupname=AuAu_200_production_2016,production=P16ij,runnumber=17039044,filename~st_physics,storage!=hpss" preferStorage="local" singleCopy="true" nFiles="5" /> <!-- nFiles="all"  -->
 <stdout URL="file:/star/data01/pwg/mmorozov/Polarization/general/log/$JOBID.out"/>
 <stderr URL="file:/star/data01/pwg/mmorozov/Polarization/general/log/$JOBID.err"/>
 <output fromScratch="$JOBID.root" toURL="file:/star/data01/pwg/mmorozov/Polarization/general/data/"/>

@@ -88,6 +88,12 @@ double const mZDCSMDCenterey = 0;
 double const mZDCSMDCenterwx = 0;
 double const mZDCSMDCenterwy = 0;
 
+/*const Double_t mZDCSMDCenterex = 4.72466;
+const Double_t mZDCSMDCenterey = 5.53629;
+const Double_t mZDCSMDCenterwx = 4.39604;
+const Double_t mZDCSMDCenterwy = 5.19968;*/
+
+
 
 // inFile - is a name of name.FemtoDst.root file or a name
 //          of a name.lis(t) files that contains a list of
@@ -375,7 +381,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
             
         //-------------------------------reaction plane--------------------------------------------------
-        if(!ScipZeroWeight(QWeight_1, 2*nSub)) continue;
+        if(!ScipZeroWeight(QWeight_1, 2*nSub-2)) continue;
         if(!ScipZeroWeight(QWeight_2, nSub-1)) continue;
             
         //Get Q vectors
@@ -660,15 +666,13 @@ bool ScipZeroWeight(double arr[], int size) {
 Float_t ZDCSMD( StPicoEvent *pEv, int eastwest, int verthori, int strip ) {
 
         float val = 0;
-        if( fIsPicoAnalysis ){
-                if     ( eastwest==0 && verthori==0 ) val = pEv->ZdcSmdEastVertical  (strip-1);
-                else if( eastwest==0 && verthori==1 ) val = pEv->ZdcSmdEastHorizontal(strip-1);
-                else if( eastwest==1 && verthori==0 ) val = pEv->ZdcSmdWestVertical  (strip-1);
-                else if( eastwest==1 && verthori==1 ) val = pEv->ZdcSmdWestHorizontal(strip-1);
+        
+        if     ( eastwest==0 && verthori==0 ) val = pEv->ZdcSmdEastVertical  (strip-1);
+        else if( eastwest==0 && verthori==1 ) val = pEv->ZdcSmdEastHorizontal(strip-1);
+        else if( eastwest==1 && verthori==0 ) val = pEv->ZdcSmdWestVertical  (strip-1);
+        else if( eastwest==1 && verthori==1 ) val = pEv->ZdcSmdWestHorizontal(strip-1);
 
-        }else{
-                val = fMuDst->event()->zdcTriggerDetector().zdcSmd( (StBeamDirection)eastwest, verthori, strip );
-        }
+        
         return val;
 }
 
