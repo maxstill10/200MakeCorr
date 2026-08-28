@@ -87,12 +87,12 @@ double const mZDCSMDCenterex = 0;
 double const mZDCSMDCenterey = 0;
 double const mZDCSMDCenterwx = 0;
 double const mZDCSMDCenterwy = 0;
-
-/*const Double_t mZDCSMDCenterex = 4.72466;
+/*
+const Double_t mZDCSMDCenterex = 4.72466;
 const Double_t mZDCSMDCenterey = 5.53629;
 const Double_t mZDCSMDCenterwx = 4.39604;
-const Double_t mZDCSMDCenterwy = 5.19968;*/
-
+const Double_t mZDCSMDCenterwy = 5.19968;
+*/
 
 
 // inFile - is a name of name.FemtoDst.root file or a name
@@ -100,7 +100,7 @@ const Double_t mZDCSMDCenterwy = 5.19968;*/
 //          name1.FemtoDst.root files
 //_________________
 void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
-                      const string mode) {
+                      const string mode, const Char_t *runnumber) {
 //    gSystem->Load("StEpdUtil");
 //    gSystem->Load("StRefMultCorr");
 //    gSystem->Load("libStPicoDst");
@@ -130,7 +130,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
     if(mode == "Centred" || mode == "Flatt"){
         //Recentering
-        TFile *input = new TFile("/star/u/mmorozov/14p5MakeCorrections/correctionsEP_output/output6sem_Psi1_2_3Corr.root", "read");
+        TFile *input = new TFile("../outputFiles/out.root", "read");
         for(int iSub=0; iSub!=2*nSub; iSub++){
             Qvec1Prof_TH[iSub] = (TH1F*)input->Get(Form("Qvec1Prof_%i", iSub));
             Qvec2Prof_TH[iSub] = (TH1F*)input->Get(Form("Qvec2Prof_%i", iSub));
@@ -140,7 +140,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
         if(mode == "Flatt"){
 
             //Flattening
-            TFile *inputCentred = new TFile("/star/u/mmorozov/14p5MakeCorrections/correctionsEP_output/outputCentred_Psi1_2_3Corr.root", "read");
+            TFile *inputCentred = new TFile("../outputFiles/outCentred.root", "read");
             
             for(int iProf=0; iProf!=10; iProf++){
                 for(int iSub=0; iSub!=nSub; iSub++){
@@ -314,6 +314,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
             Qvec_1[2*iSub] = 0.;
             Qvec_1[2*iSub+1] = 0.;
             QWeight_1[2*iSub] = 0.;
+            QWeight_1[2*iSub+1] = 0.;
             Psi1[iSub] = 0.;
             Qvec_2[2*iSub] = 0.;
             Qvec_2[2*iSub+1] = 0.;
@@ -449,10 +450,10 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
         
             for(int iSub=0; iSub!=nSub; iSub++){
                 Psi1[iSub] += deltaPsi1[iSub];
-                while(Psi1[iSub]>2*TMath::Pi()) Psi2[iSub] -= 2*TMath::Pi();
-                while(Psi1[iSub]<0.0) Psi2[iSub] += 2*TMath::Pi();
+                while(Psi1[iSub]>2*TMath::Pi()) Psi1[iSub] -= 2*TMath::Pi();
+                while(Psi1[iSub]<0.0) Psi1[iSub] += 2*TMath::Pi();
                 deltaPsi1[iSub] = 0.0;
-                
+          
                 Psi2[iSub] += deltaPsi2[iSub]/2.;
                 while(Psi2[iSub]>TMath::Pi()) Psi2[iSub] -= TMath::Pi();
                 while(Psi2[iSub]<0.0) Psi2[iSub] += TMath::Pi();

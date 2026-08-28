@@ -25,9 +25,10 @@
 #include "TString.h"
 
 //_________________
-void MaxRunner(const Char_t *inFileName = "/star/u/mmorozov/inputfiles/st_physics_17039044_raw_2500012.picoDst.root", 
-                 const Char_t *outFileName = "/star/u/mmorozov/outputFiles/out.root",
-		 const Char_t *mode = "6sem") {
+void MaxRunner(const Char_t *inFileName = "paths200.list", 
+                 const Char_t *outFileName = "/star/u/mmorozov/outputFiles/outFlatt.root",
+		 const Char_t *mode = "Flatt",
+                 const Char_t *runnumber = "17039044") {
   // Next line is not needed if you are not running in a standalone mode
   cout << "Started Runner!" << endl;
   gSystem->Load("libStPicoDst.so");//libStPicoDst
@@ -43,6 +44,8 @@ void MaxRunner(const Char_t *inFileName = "/star/u/mmorozov/inputfiles/st_physic
   str += outFileName;
   str += "\",\"";
   str += mode;
+  str += "\",\"";
+  str += runnumber;
   str += "\")";
   gROOT->ProcessLine( str.Data() );
   // Next line should be commented if you run in a batch mode
