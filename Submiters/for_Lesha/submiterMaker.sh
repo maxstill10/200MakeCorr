@@ -1,19 +1,15 @@
-#!/bin/bash
+FILE="missing_run16_1.list"
 
-FILE="run16_1_runnum.list"
-
-#6sem, Centred, Flatt
 mode="Centred"
 
 runnumbers=()
 
 while IFS= read -r line; do
-   numbers+=("$line")   
+   numbers+=("$line")
 done < "$FILE"
 
-for number in "${numbers[@]:1}"; do
-    mkdir -p /star/data01/pwg/mmorozov/Polarization/200GeV/log/$number
-    mkdir -p /star/data01/pwg/mmorozov/Polarization/200GeV/data/$number
+for number in "${numbers[@]}"; do
+    
     OutFile="submiter_$number.xml"
 
 
@@ -37,13 +33,13 @@ for number in "${numbers[@]:1}"; do
 
 <!-- Get input files from get_file_lis.pl -->
 <input URL="catalog:star.bnl.gov?filetype=daq_reco_picoDst,trgsetupname=AuAu_200_production_2016,production=P16ij,runnumber=$number,filename~st_physics,storage!=hpss" preferStorage="local" singleCopy="true" nFiles="all" /> <!-- nFiles="all"  -->
-<stdout URL="file:/star/data01/pwg/mmorozov/Polarization/200GeV/log/$number/\$JOBID.out"/>
-<stderr URL="file:/star/data01/pwg/mmorozov/Polarization/200GeV/log/$number/\$JOBID.err"/>
-<output fromScratch="\$JOBID.root" toURL="file:/star/data01/pwg/mmorozov/Polarization/200GeV/data/$number"/>
+<stdout URL="file:/star/data01/pwg/aspovarov/for_Maxim/Polarization/200GeV/log/$number/\$JOBID.out"/>
+<stderr URL="file:/star/data01/pwg/aspovarov/for_Maxim/Polarization/200GeV/log/$number/\$JOBID.err"/>
+<output fromScratch="\$JOBID.root" toURL="file:/star/data01/pwg/aspovarov/for_Maxim/Polarization/200GeV/data/$number"/>
 
 
   <Generator>
-    <Location>/star/data01/pwg/mmorozov/Polarization/200GeV/log/$number</Location>
+    <Location>/star/data01/pwg/aspovarov/for_Maxim/Polarization/200GeV/log/$number</Location>
   </Generator>
 
 
@@ -51,5 +47,7 @@ for number in "${numbers[@]:1}"; do
 
 EOF
 
-   star-submit-beta $OutFile
+echo "submiter_${number} was created"
+
 done
+

@@ -130,7 +130,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
     if(mode == "Centred" || mode == "Flatt"){
         //Recentering
-        TFile *input = new TFile("../outputFiles/out.root", "read");
+        TFile *input = new TFile(Form("/star/data01/pwg/mmorozov/Polarization/200GeV/corrFiles/centring/auau200_%s_Psi1_Psi2_Psi3_centCorrFile.root", runnumber), "read");
         for(int iSub=0; iSub!=2*nSub; iSub++){
             Qvec1Prof_TH[iSub] = (TH1F*)input->Get(Form("Qvec1Prof_%i", iSub));
             Qvec2Prof_TH[iSub] = (TH1F*)input->Get(Form("Qvec2Prof_%i", iSub));
@@ -339,11 +339,12 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
             StPicoTrack *femtoTrack = dst->track(iTrk);
 
             if (!femtoTrack) continue;
+	    if(!femtoTrack->isPrimary()) continue;
             //std::cout << "Track #[" << (iTrk+1) << "/" << nTracks << "]"  << std::endl;
 	        double eta = femtoTrack->pMom().Eta();
             double wEff = femtoTrack->pPt();
 
-	        if (femtoTrack->nHits() < 15 || wEff < 0.15 || wEff > 2. || fabs(eta) > 1.5 || fabs(eta)<0.1) continue;
+	        if (femtoTrack->nHits() < 15 || wEff < 0.15 || wEff > 2. || fabs(eta) > 1. || fabs(eta)<0.1) continue;
             if ((Float_t)femtoTrack->nHits()/femtoTrack->nHitsPoss() < 0.52 ) continue;
 
             
