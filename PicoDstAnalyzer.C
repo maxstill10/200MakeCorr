@@ -98,9 +98,12 @@ const Double_t mZDCSMDCenterwy = 5.19968;
 // inFile - is a name of name.FemtoDst.root file or a name
 //          of a name.lis(t) files that contains a list of
 //          name1.FemtoDst.root files
+// mProd - is a name of production
+//         run14
+//         run16_1
 //_________________
 void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
-                      const string mode, const Char_t *runnumber) {
+                      const string mode, const Char_t *runnumber, const Char_t *mProd) {
 //    gSystem->Load("StEpdUtil");
 //    gSystem->Load("StRefMultCorr");
 //    gSystem->Load("libStPicoDst");
@@ -300,7 +303,11 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 	
         
         //Centrality
-        StRefMultCorr* refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run16_AuAu200_VpdMB5_P16ij() ;
+        StRefMultCorr* refmultCorrUtil;
+
+        if(mProd == "run14") refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run14_AuAu200_VpdMB5_P16id() ;
+        else if(mProd == "run16_1") refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run16_AuAu200_VpdMB5_P16ij() ;
+
         refmultCorrUtil -> init(event->runId());
         refmultCorrUtil -> initEvent(event->grefMult(), event->primaryVertex().z(), event->ZDCx());
         Bool_t isBadRun = refmultCorrUtil-> isBadRun(event->runId()); //reject bad runs
@@ -402,8 +409,8 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
             if(fabs(Qvec_3[2*iSub])>999 || fabs(Qvec_3[2*iSub+1])>999) check = false;
         }
         if(!check) continue;
-        Qvec_1[4] = Qvec_1[0] - Qvec_1[2];
-        Qvec_1[5] = Qvec_1[1] - Qvec_1[3];
+        Qvec_1[4] = Qvec_1[2] - Qvec_1[0];
+        Qvec_1[5] = Qvec_1[3] - Qvec_1[1];
         Qvec_2[4] = Qvec_2[0] + Qvec_2[2];
         Qvec_2[5] = Qvec_2[1] + Qvec_2[3];
         Qvec_3[4] = Qvec_3[0] + Qvec_3[2];
@@ -521,12 +528,12 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
     //EP Distributions
     for(int iCent=0; iCent!=9; iCent++){
-	    Qvec1Hist[iCent][0]->SetTitle(Form("Qx East EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][1]->SetTitle(Form("Qy East EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][2]->SetTitle(Form("Qx West EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][3]->SetTitle(Form("Qy West EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][4]->SetTitle(Form("Qx Comb EPD first harm (%i)", iCent));
-        Qvec1Hist[iCent][5]->SetTitle(Form("Qy Comb EPD first harm (%i)", iCent));
+	    Qvec1Hist[iCent][0]->SetTitle(Form("Qx East ZDC first harm (%i)", iCent));
+        Qvec1Hist[iCent][1]->SetTitle(Form("Qy East ZDC first harm (%i)", iCent));
+        Qvec1Hist[iCent][2]->SetTitle(Form("Qx West ZDC first harm (%i)", iCent));
+        Qvec1Hist[iCent][3]->SetTitle(Form("Qy West ZDC first harm (%i)", iCent));
+        Qvec1Hist[iCent][4]->SetTitle(Form("Qx Comb ZDC first harm (%i)", iCent));
+        Qvec1Hist[iCent][5]->SetTitle(Form("Qy Comb ZDC first harm (%i)", iCent));
 
         Qvec2Hist[iCent][0]->SetTitle(Form("Qx West TPC second harm (%i)", iCent));
         Qvec2Hist[iCent][1]->SetTitle(Form("Qy West TPC second harm (%i)", iCent));
@@ -542,9 +549,9 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
         Qvec3Hist[iCent][4]->SetTitle(Form("Qx Comb TPC third harm (%i)", iCent));
         Qvec3Hist[iCent][5]->SetTitle(Form("Qy Comb TPC third harm (%i)", iCent));
 
-        Psi1Hist[iCent][0]->SetTitle(Form("West Psi_1 EPD (%i)", iCent));
-        Psi1Hist[iCent][1]->SetTitle(Form("East Psi_1 EPD (%i)", iCent));
-        Psi1Hist[iCent][2]->SetTitle(Form("Comb Psi_1 EPD (%i)", iCent));
+        Psi1Hist[iCent][0]->SetTitle(Form("East Psi_1 ZDC (%i)", iCent));
+        Psi1Hist[iCent][1]->SetTitle(Form("West Psi_1 ZDC (%i)", iCent));
+        Psi1Hist[iCent][2]->SetTitle(Form("Comb Psi_1 ZDC (%i)", iCent));
         
         Psi2Hist[iCent][0]->SetTitle(Form("West Psi_2 TPC (%i)", iCent));
         Psi2Hist[iCent][1]->SetTitle(Form("East Psi_2 TPC (%i)", iCent));
@@ -555,12 +562,12 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
         Psi3Hist[iCent][2]->SetTitle(Form("Comb Psi_3 TPC (%i)", iCent));
 
     }
-    Qvec1Prof[0]->SetTitle("Profile Qx West EPD first harm");
-    Qvec1Prof[1]->SetTitle("Profile Qy West EPD first harm");
-    Qvec1Prof[2]->SetTitle("Profile Qx East EPD first harm");
-    Qvec1Prof[3]->SetTitle("Profile Qy East EPD first harm");
-    Qvec1Prof[4]->SetTitle("Profile Qx Comb EPD first harm");
-    Qvec1Prof[5]->SetTitle("Profile Qy Comb EPD first harm");
+    Qvec1Prof[0]->SetTitle("Profile Qx East ZDC first harm");
+    Qvec1Prof[1]->SetTitle("Profile Qy East ZDC first harm");
+    Qvec1Prof[2]->SetTitle("Profile Qx West ZDC first harm");
+    Qvec1Prof[3]->SetTitle("Profile Qy West ZDC first harm");
+    Qvec1Prof[4]->SetTitle("Profile Qx Comb ZDC first harm");
+    Qvec1Prof[5]->SetTitle("Profile Qy Comb ZDC first harm");
 
     Qvec2Prof[0]->SetTitle("Profile Qx West TPC second harm");
     Qvec2Prof[1]->SetTitle("Profile Qy West TPC second harm");
@@ -577,12 +584,12 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
     Qvec3Prof[5]->SetTitle("Profile Qy Comb TPC third harm");
 
     for(int i=0; i!=10; i++){
-	    Coef_A_n_Psi1[i][0]->SetTitle(Form("A_n_%i West Psi_1 EPD", i));
-	    Coef_B_n_Psi1[i][0]->SetTitle(Form("B_n_%i West Psi_1 EPD", i));
-	    Coef_A_n_Psi1[i][1]->SetTitle(Form("A_n_%i East Psi_1 EPD", i));
-        Coef_B_n_Psi1[i][1]->SetTitle(Form("B_n_%i East Psi_1 EPD", i));
-	    Coef_A_n_Psi1[i][2]->SetTitle(Form("A_n_%i Comb Psi_1 EPD", i));
-        Coef_B_n_Psi1[i][2]->SetTitle(Form("B_n_%i Comb Psi_1 EPD", i));
+	    Coef_A_n_Psi1[i][0]->SetTitle(Form("A_n_%i East Psi_1 ZDC", i));
+	    Coef_B_n_Psi1[i][0]->SetTitle(Form("B_n_%i East Psi_1 ZDC", i));
+	    Coef_A_n_Psi1[i][1]->SetTitle(Form("A_n_%i West Psi_1 ZDC", i));
+        Coef_B_n_Psi1[i][1]->SetTitle(Form("B_n_%i West Psi_1 ZDC", i));
+	    Coef_A_n_Psi1[i][2]->SetTitle(Form("A_n_%i Comb Psi_1 ZDC", i));
+        Coef_B_n_Psi1[i][2]->SetTitle(Form("B_n_%i Comb Psi_1 ZDC", i));
         
         Coef_A_n_Psi2[i][0]->SetTitle(Form("A_n_%i West Psi_2 TPC", i));
 	    Coef_B_n_Psi2[i][0]->SetTitle(Form("B_n_%i West Psi_2 TPC", i));
@@ -609,27 +616,47 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
     
 }
 
-bool EventCut(StPicoEvent *event)
+bool EventCut(StPicoEvent *event, Char_t *mProd)
 {
   bool cut = true;
   double vz = event->primaryVertex().Z(), vx = event->primaryVertex().X(), vy = event->primaryVertex().Y();
-  double grefMult = event->grefMult(), tofMult = event->btofTrayMultiplicity();
+  double grefMult = event->grefMult(), tofMult = event->btofTrayMultiplicity(), refMult = event->refMult();;
   double vx_ave, vy_ave;
 
-  if (fabs(vz) > 6. || fabs(vz-event->vzVpd()) > 3.) cut = false;
-  if(fabs(vx)<1.e-5 && fabs(vy)<1.e-5 && fabs(vz)<1.e-5) cut = false;
+  if(fabs(vx)<1.e-5 && fabs(vy)<1.e-5 && fabs(vz)<1.e-5) cut = false;  
+  
+  if(mProd == "run14"){ //run14
+    if (fabs(vz) > 6. || fabs(vz-event->vzVpd()) > 3.) cut = false;
+  
+    vx_ave = 0.056;
+    vy_ave = -0.326;
+    if (!event->isTrigger(450050) && !event->isTrigger(450060) && !event->isTrigger(450005) && !event->isTrigger(450015) &&
+        !event->isTrigger(450025) ) cut = false;
+      
+    if( tofMult < (-240+4.5*refMult) ) cut = false;
+    if( tofMult > ( 140+10.*refMult) ) cut = false;
 
-  vx_ave = -0.205;
-  vy_ave = -0.177;
-  if (!event->isTrigger(520001) && !event->isTrigger(520011) && !event->isTrigger(520021) && !event->isTrigger(520031) &&
-      !event->isTrigger(520041) && !event->isTrigger(520051)) cut = false;   
-  if( tofMult<(-200+3.5*grefMult) ) cut = false;
-  if( tofMult>( 180+5.8*grefMult) ) cut = false;
+    double vxc = vx - vx_ave;
+    double vyc = vy - vy_ave;
 
-  double vxc = vx - vx_ave;
-  double vyc = vy - vy_ave;
+    if(( vxc*vxc + vyc*vyc) > 4) cut = false;
 
-  if(( vxc*vxc + vyc*vyc) > 4) cut = false;
+  }else if(mProd == "run16_1"){ //run16_prod1
+    if (fabs(vz) > 6. || fabs(vz-event->vzVpd()) > 3.) cut = false;
+  
+    vx_ave = -0.205;
+    vy_ave = -0.177;
+    if (!event->isTrigger(520001) && !event->isTrigger(520011) && !event->isTrigger(520021) && !event->isTrigger(520031) &&
+        !event->isTrigger(520041) && !event->isTrigger(520051)) cut = false;   
+    if( tofMult<(-200+3.5*grefMult) ) cut = false;
+    if( tofMult>( 180+5.8*grefMult) ) cut = false;
+
+    double vxc = vx - vx_ave;
+    double vyc = vy - vy_ave;
+
+    if(( vxc*vxc + vyc*vyc) > 4) cut = false;
+
+  }
 //  if (!GoodRun(event))  cut = false;
   return cut;
 
