@@ -25,9 +25,9 @@
 #include "TString.h"
 
 //_________________
-void MaxRunner(const Char_t *inFileName = "paths200.list", 
+void MaxRunner(const Char_t *inFileName = "/star/data01/pwg/mmorozov/Polarization/inputfiles/st_physics_17039044_raw_2500012.picoDst.root", 
                  const Char_t *outFileName = "/star/u/mmorozov/outputFiles/outFlatt.root",
-                 const Char_t *mode = "Flatt",
+                 const Char_t *mode = "6sem",
                  const Char_t *runnumber = "17039044",
                  const Char_t *mProd = "run16_1") {
   // Next line is not needed if you are not running in a standalone mode

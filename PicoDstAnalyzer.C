@@ -56,7 +56,7 @@ R__LOAD_LIBRARY(libStPicoDst.so)
 #endif
 */
 // Forward declarations
-bool EventCut(StPicoEvent *event);
+bool EventCut(StPicoEvent *event, const Char_t* mProd);
 Bool_t isGoodTrack(const TVector3& vect, const Int_t& nHits,
                    const Int_t& nHitsPoss);
 
@@ -133,7 +133,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
     if(mode == "Centred" || mode == "Flatt"){
         //Recentering
-        TFile *input = new TFile(Form("/star/data01/pwg/mmorozov/Polarization/200GeV/corrFiles/centring/auau200_%s_Psi1_Psi2_Psi3_centCorrFile.root", runnumber), "read");
+        TFile *input = new TFile(Form("/star/data01/pwg/mmorozov/Polarization/200GeV/corrFiles/centring/%s/auau200_%s_Psi1_Psi2_Psi3_centCorrFile.root", mProd, runnumber), "read");
         for(int iSub=0; iSub!=2*nSub; iSub++){
             Qvec1Prof_TH[iSub] = (TH1F*)input->Get(Form("Qvec1Prof_%i", iSub));
             Qvec2Prof_TH[iSub] = (TH1F*)input->Get(Form("Qvec2Prof_%i", iSub));
@@ -299,14 +299,14 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
 
 
 	    // Simple event cut
-        if (EventCut(event) == false ) continue;
+        if (EventCut(event, mProd) == false ) continue;
 	
         
         //Centrality
-        StRefMultCorr* refmultCorrUtil;
+        StRefMultCorr *refmultCorrUtil;
 
-        if(mProd == "run14") refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run14_AuAu200_VpdMB5_P16id() ;
-        else if(mProd == "run16_1") refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run16_AuAu200_VpdMB5_P16ij() ;
+        if(strcmp(mProd, "run14") == 0) refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run14_AuAu200_VpdMB5_P16id() ;
+        else if(strcmp(mProd, "run16_1") == 0) {refmultCorrUtil = CentralityMaker::instance()->getgRefMultCorr_Run16_AuAu200_VpdMB5_P16ij() ; }
 
         refmultCorrUtil -> init(event->runId());
         refmultCorrUtil -> initEvent(event->grefMult(), event->primaryVertex().z(), event->ZDCx());
@@ -314,7 +314,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
         //Bool_t isPileUpEvt = !refmultCorrUtil->passnTofMatchRefmultCut(1.*event->grefMult(), 1.*event->nBTOFMatch()); //reject pileup events
 
         int cent = refmultCorrUtil->getCentralityBin9() ;
-        if (cent < 0 || isBadRun ) continue; 
+        if (cent < 0 || isBadRun ) continue;
 
 
         for(int iSub=0; iSub!=nSub; iSub++){
@@ -616,7 +616,7 @@ void PicoDstAnalyzer(const Char_t *inFile, const Char_t *outputFile,
     
 }
 
-bool EventCut(StPicoEvent *event, Char_t *mProd)
+bool EventCut(StPicoEvent *event, const Char_t* mProd)
 {
   bool cut = true;
   double vz = event->primaryVertex().Z(), vx = event->primaryVertex().X(), vy = event->primaryVertex().Y();
@@ -625,7 +625,7 @@ bool EventCut(StPicoEvent *event, Char_t *mProd)
 
   if(fabs(vx)<1.e-5 && fabs(vy)<1.e-5 && fabs(vz)<1.e-5) cut = false;  
   
-  if(mProd == "run14"){ //run14
+  if(strcmp(mProd, "run14") == 0){ //run14
     if (fabs(vz) > 6. || fabs(vz-event->vzVpd()) > 3.) cut = false;
   
     vx_ave = 0.056;
@@ -641,13 +641,13 @@ bool EventCut(StPicoEvent *event, Char_t *mProd)
 
     if(( vxc*vxc + vyc*vyc) > 4) cut = false;
 
-  }else if(mProd == "run16_1"){ //run16_prod1
+  }else if(strcmp(mProd, "run16_1") == 0){ //run16_prod1
     if (fabs(vz) > 6. || fabs(vz-event->vzVpd()) > 3.) cut = false;
   
     vx_ave = -0.205;
     vy_ave = -0.177;
     if (!event->isTrigger(520001) && !event->isTrigger(520011) && !event->isTrigger(520021) && !event->isTrigger(520031) &&
-        !event->isTrigger(520041) && !event->isTrigger(520051)) cut = false;   
+        !event->isTrigger(520041) && !event->isTrigger(520051)) cut = false;
     if( tofMult<(-200+3.5*grefMult) ) cut = false;
     if( tofMult>( 180+5.8*grefMult) ) cut = false;
 
